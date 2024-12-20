@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game</title>
+  </head>
+  <body>
+    <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
+
+    <script>
+      let score = 0
+      let gameScore;
+      let boxSPEED = 200;
+      let SPEED = 480;
+      let monsterSpeed = 20;
+      let insaneMode = false;
+      let scoreMultiplier = 2
+      kaboom({ background: [0, 0, 0] });
+      loadSprite("spike", "sprites/spike.png");
+      loadSprite("coin", "sprites/coin.png");
+      loadBean();
+      function addButton(txt, p, f) {
+          // add a parent background object
+          const btn = add([
+            rect(200, 80, { radius: 8 }),
+            pos(p),
+            area(),
+            scale(1),
+            anchor("center"),
+            outline(4),
+          ]);
+
+          // add a child object that displays the text
+          btn.add([text(txt), anchor("center"), color(0, 0, 0)]);
+
+          btn.onClick(f);
+
+          return btn;
+        }
+      scene("main", () => {
+        addButton("Play", vec2(width()/2, 250), () => go('game'))
+        addButton("Shop", vec2(width()/2, 350), () => go('shop'))
+      });
+      scene("shop", () => {
+          let index = 0
+          let nameArr = ["Increase score multiplier", 'txt']
+          let descArr = [
+            "Multiply your score at the end of the game",
+            "text"
+          ]
+          let name = add([
+            text(nameArr[index]),
+            pos(width()/2, 150),
+            anchor('center')
+          ])
+          let desc = add([
+            text(descArr[index]),
+            pos(width()/2, 350),
+            anchor('center')
+          ])
+          addButton(">", vec2(width()/2 +width()/3, 250), () => {if(index ==nameArr.length-1){return}; index += 1; name.text = (nameArr[index]); desc.text = (descArr[index])})
+          addButton("<", vec2(width()/2 - width()/3, 250), () => {if(index == 0){return};index -= 1; name.text = (nameArr[index]); desc.text = (descArr[index]) })
+      })
+      scene("game", () => {
+        gameScore = 0
+        const sky = add([rect(width(), height()), color(0, 0, 0), opacity(0)]);
+        let scoreCounter = add([
+          text(gameScore),
+          pos(40, 80)
+        ])
+        let player = add([
+          sprite("bean"),
+          pos(700, height() / 2 - 200),
+          area(),
+          body(),
+          "player",
+        ]);
+
+        let monster = add([
+          sprite("bean"),
+          color(RED),
+          pos(player.pos.x - 200, player.pos.y),
+          scale(3),
+          area(),
+          anchor("center"),
+          "monster"
+        ]);
+        loop(0.4, () => {
+          add([
+            rect(rand(50, 200), rand(50, 200)),
+            outline(3),
+            color(rgb(150, 75, 0)),
+            pos(width() / 2 + width() /3, rand(0, height() - 200)),
+            area(),
+            body(),
+            "box",
+          ]);
+        })
+
+        loop(0.2, () => {
+          if(insaneMode){
+            gameScore++
+            gameScore++ 
+            gameScore++ 
+            scoreCounter.text = (gameScore)
+          } else{
+            gameScore++
+            scoreCounter.text = (gameScore)
+          }
+        })
+        
+        sky.onUpdate(() => {
+          if (insaneMode) {
+            const t = time() * 10;
+            sky.color.r = wave(127, 255, t);
+            sky.color.g = wave(127, 255, t + 1);
+            sky.color.b = wave(127, 255, t + 2);
+            sky.opacity = 1;
+          } else {
+            sky.color = rgb(0, 0, 0);
+            sky.opacity = 0;
+          }
+        });
+        onUpdate("box", (b) => {
+          b.move(-boxSPEED, 0);
+        });
+        onUpdate("box", (b) => {
+          if (b.pos.x <= 0) {
+            b.destroy();
+          }
+        });
+        
+        // controls
+        onKeyDown("space", () => {
+          insaneMode = true;
+          boxSPEED = 900;
+          SPEED = 600;
+        });
+        onKeyRelease("space", () => {
+          insaneMode = false;
+          boxSPEED = 200;
+          SPEED = 480;
+        });
+        loop(1, () => {
+          monster.moveTo(200, player.pos.y);
+        });
+        onKeyDown("up", () => {
+          player.move(0, -SPEED);
+        });
+        onKeyDown("down", () => {
+          player.move(0, SPEED);
+        });
+        player.onCollide("monster", () => {
+          go('lose')
+        })
+      });
+      scene("lose", () => {
+        add([
+          text('You Lose!'),
+          pos(width()/2, 150),
+          anchor('center'),
+          scale(2)
+        ])
+        add([
+          text(`Your score: ${gameScore} x ${scoreMultiplier} = `+gameScore*scoreMultiplier),
+          pos(width() /2, 250),
+          anchor('center'),
+        ])
+        score += gameScore*scoreMultiplier
+        add([
+          text(`Your total score is: ${score} + ${gameScore} = `+Number(score+gameScore)),
+          pos(width() /2, 350),
+          anchor('center'),
+        ])
+        onKeyPress("space", () => {
+          go('game')
+        })
+      })
+      go("game");
+      </script>
+  </body>
+  </html>
+  
