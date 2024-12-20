@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="ico.png">
+    <link rel="icon" type="image/x-icon" href="ico.png" />
     <title>Chase Game</title>
   </head>
   <body>
@@ -11,7 +11,7 @@
 
     <script>
       let score = 0;
-      let hasGun = true;
+      let hasGun = false;
       let spawning;
       let bullet;
       let wMonster;
@@ -46,9 +46,50 @@
         return btn;
       }
       scene("main", () => {
-        addButton("Play", vec2(width() / 2, 250), () => go("game"));
-        addButton("Shop", vec2(width() / 2, 350), () => go("shop"));
+        add([
+          sprite("bean"),
+          pos(width() / 2 - 500, 150),
+          anchor("center"),
+          scale(2.5),
+        ]);
+        add([
+          sprite("bean"),
+          pos(width() / 2 + 500, 150),
+          anchor("center"),
+          scale(2.5),
+        ]);
+        add([
+          text("Chase Game"),
+          pos(width() / 2, 150),
+          anchor("center"),
+          scale(4),
+        ]);
+        addButton("Play", vec2(width() / 2, 350), () => go("game"));
+        addButton("Shop", vec2(width() / 2, 450), () => go("shop"));
+        addButton("Controls", vec2(width() / 2, 550), () => go('controls'))
+        add([
+          text('Made by: Karim Hatem \nOn 20 December 2024'),
+          pos(width()/2, height()/2+height()/3),
+          anchor('center')
+        ])
       });
+      scene("controls", () => {
+        add([
+          text('Controls'),
+          pos(width()/2, 150),
+          anchor('center'),
+          scale(2),
+        ])
+        add([
+          text('G to equip the gun\nDown/Up arrows to move\nSpace to go insane mode\nEsc to return to main menu'),
+          pos(width()/2, 350),
+          anchor('center'),
+          scale(1.5),
+        ])
+        onKeyPress('escape', () => {
+          go('main')
+        })
+      })
       scene("shop", () => {
         let index = 0;
         let nameArr = ["Increase score multiplier", "Gun"];
@@ -71,16 +112,11 @@
           if (index === 0 && score >= 1200) {
             scoreMultiplier += 1;
             score -= 1200;
-          } else if (index === 1 && score >= 3000) {
+          } else if (index === 1 && score >= 3000 && hasGun === false) {
             hasGun = true;
             score -= 3000;
           }
         });
-        addButton(
-          "Back",
-          vec2(width() / 2 - width() / 3, height() / 2 + height() / 3),
-          () => go("main")
-        );
         addButton(">", vec2(width() / 2 + width() / 3, 250), () => {
           if (index == nameArr.length - 1) {
             return;
@@ -100,10 +136,14 @@
         onUpdate(() => {
           balance.text = `Exp: ${score}`;
         });
+        onKeyPress('escape', () => {
+          go('main')
+        })
       });
       scene("game", () => {
-        gameScore = 0;
         const sky = add([rect(width(), height()), color(0, 0, 0), opacity(0)]);
+        add([text('SPACE: insane mode'), pos(24, height() - 24), anchor("botleft")])
+        gameScore = 0;
         let scoreCounter = add([text(gameScore), pos(40, 80)]);
         let player = add([
           sprite("bean"),
@@ -186,16 +226,18 @@
         });
         // controls
         onKeyPress("g", () => {
-          if (hasGun) {
+          let gunEquipped
+          if (hasGun && !gunEquipped) {
             let gun = add([
               sprite("gun"),
               scale(0.6),
               pos(player.pos.x + 20, player.pos.y),
+              gunEquipped = true
             ]);
             function update() {
               // get the current cursor location
               const cursorPos = vec2(mousePos().x, mousePos().y);
-
+              
               // point the player towards the cursor
               gun.angle = cursorPos.sub(player.pos).angle();
             }
@@ -272,25 +314,24 @@
           scale(2),
         ]);
         add([
-          text(
-            `Your score: ${gameScore} x ${scoreMultiplier} = ` +
-              gameScore * scoreMultiplier
-          ),
+          text(`Your score: ${gameScore} x ${scoreMultiplier} = ` +gameScore * scoreMultiplier),
           pos(width() / 2, 250),
           anchor("center"),
         ]);
         newScore = gameScore * scoreMultiplier;
         add([
-          text(
-            `Your total score is: ${score} + ${newScore} = ` +
-              Number(newScore + score)
-          ),
+          text(`Your total score is: ${score} + ${newScore} = ` +Number(newScore + score)),
           pos(width() / 2, 350),
           anchor("center"),
         ]);
         score += newScore;
-        onKeyPress("space", () => {
-          go("game");
+        add([
+          text('Press Escape to go to main menu'),
+          pos(width()/2, height()- 200),
+          anchor('center')
+        ])
+        onKeyPress("escape", () => {
+          go("main");
         });
       });
       go("main");
