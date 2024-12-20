@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
 
     <script>
-      let score = 99999999999;
+      let score = 0;
       let hasGun = false;
       let spawning;
       let bullet;
@@ -95,7 +95,7 @@
         let nameArr = ["Increase score multiplier", "Gun"];
         let descArr = [
           "Multiply your xp at the end of the game \nCosts: 1200 xp",
-          "yes i am not joking\nCosts 3000xp\nOne time use",
+          "yes i am not joking\nCosts: 3000xp\nOne time use",
         ];
         let name = add([
           text(nameArr[index]),
