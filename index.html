@@ -9,67 +9,101 @@
     <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
 
     <script>
-      let score = 0
+      let score = 0;
+      let hasGun = true;
+      let spawning;
+      let bullet;
+      let wMonster;
       let newScore;
       let gameScore;
       let boxSPEED = 200;
       let SPEED = 480;
       let monsterSpeed = 20;
       let insaneMode = false;
-      let scoreMultiplier = 2
+      let scoreMultiplier = 1;
       kaboom({ background: [0, 0, 0] });
       loadSprite("spike", "sprites/spike.png");
       loadSprite("coin", "sprites/coin.png");
+      loadSprite("gun", "sprites/gun.png");
       loadBean();
       function addButton(txt, p, f) {
-          // add a parent background object
-          const btn = add([
-            rect(200, 80, { radius: 8 }),
-            pos(p),
-            area(),
-            scale(1),
-            anchor("center"),
-            outline(4),
-          ]);
+        // add a parent background object
+        const btn = add([
+          rect(200, 80, { radius: 8 }),
+          pos(p),
+          area(),
+          scale(1),
+          anchor("center"),
+          outline(4),
+        ]);
 
-          // add a child object that displays the text
-          btn.add([text(txt), anchor("center"), color(0, 0, 0)]);
+        // add a child object that displays the text
+        btn.add([text(txt), anchor("center"), color(0, 0, 0)]);
 
-          btn.onClick(f);
+        btn.onClick(f);
 
-          return btn;
-        }
+        return btn;
+      }
       scene("main", () => {
-        addButton("Play", vec2(width()/2, 250), () => go('game'))
-        addButton("Shop", vec2(width()/2, 350), () => go('shop'))
+        addButton("Play", vec2(width() / 2, 250), () => go("game"));
+        addButton("Shop", vec2(width() / 2, 350), () => go("shop"));
       });
       scene("shop", () => {
-          let index = 0
-          let nameArr = ["Increase score multiplier", 'txt']
-          let descArr = [
-            "Multiply your score at the end of the game",
-            "text"
-          ]
-          let name = add([
-            text(nameArr[index]),
-            pos(width()/2, 150),
-            anchor('center')
-          ])
-          let desc = add([
-            text(descArr[index]),
-            pos(width()/2, 350),
-            anchor('center')
-          ])
-          addButton(">", vec2(width()/2 +width()/3, 250), () => {if(index ==nameArr.length-1){return}; index += 1; name.text = (nameArr[index]); desc.text = (descArr[index])})
-          addButton("<", vec2(width()/2 - width()/3, 250), () => {if(index == 0){return};index -= 1; name.text = (nameArr[index]); desc.text = (descArr[index]) })
-      })
+        let index = 0;
+        let nameArr = ["Increase score multiplier", "Gun"];
+        let descArr = [
+          "Multiply your xp at the end of the game \nCosts: 1200 xp",
+          "yes i am not joking\nCosts 3000xp\nOne time use",
+        ];
+        let name = add([
+          text(nameArr[index]),
+          pos(width() / 2, 150),
+          anchor("center"),
+        ]);
+        let desc = add([
+          text(descArr[index]),
+          pos(width() / 2, 350),
+          anchor("center"),
+        ]);
+        let balance = add([text(`Exp: ${score}`), pos(80, 40)]);
+        addButton("Buy", vec2(width() / 2, height() / 2 + height() / 3), () => {
+          if (index === 0 && score >= 1200) {
+            scoreMultiplier += 1;
+            score -= 1200;
+          } else if (index === 1 && score >= 3000) {
+            hasGun = true;
+            score -= 3000;
+          }
+        });
+        addButton(
+          "Back",
+          vec2(width() / 2 - width() / 3, height() / 2 + height() / 3),
+          () => go("main")
+        );
+        addButton(">", vec2(width() / 2 + width() / 3, 250), () => {
+          if (index == nameArr.length - 1) {
+            return;
+          }
+          index += 1;
+          name.text = nameArr[index];
+          desc.text = descArr[index];
+        });
+        addButton("<", vec2(width() / 2 - width() / 3, 250), () => {
+          if (index == 0) {
+            return;
+          }
+          index -= 1;
+          name.text = nameArr[index];
+          desc.text = descArr[index];
+        });
+        onUpdate(() => {
+          balance.text = `Exp: ${score}`;
+        });
+      });
       scene("game", () => {
-        gameScore = 0
+        gameScore = 0;
         const sky = add([rect(width(), height()), color(0, 0, 0), opacity(0)]);
-        let scoreCounter = add([
-          text(gameScore),
-          pos(40, 80)
-        ])
+        let scoreCounter = add([text(gameScore), pos(40, 80)]);
         let player = add([
           sprite("bean"),
           pos(700, height() / 2 - 200),
@@ -85,32 +119,44 @@
           scale(3),
           area(),
           anchor("center"),
-          "monster"
+          "monster",
         ]);
         loop(0.4, () => {
           add([
             rect(rand(50, 200), rand(50, 200)),
             outline(3),
             color(rgb(150, 75, 0)),
-            pos(width() / 2 + width() /3, rand(0, height() - 200)),
+            pos(width() / 2 + width() / 3, rand(0, height() - 200)),
             area(),
             body(),
             "box",
           ]);
-        })
+        });
 
         loop(0.2, () => {
-          if(insaneMode){
-            gameScore++
-            gameScore++ 
-            gameScore++ 
-            scoreCounter.text = (gameScore)
-          } else{
-            gameScore++
-            scoreCounter.text = (gameScore)
+          if (insaneMode) {
+            gameScore++;
+            gameScore++;
+            gameScore++;
+            scoreCounter.text = gameScore;
+          } else {
+            gameScore++;
+            scoreCounter.text = gameScore;
           }
-        })
-        
+        });
+
+        spawning = setInterval(() => {
+          wMonster = add([
+            sprite("bean"),
+            color(RED),
+            pos(player.pos.x + 700, player.pos.y),
+            scale(3),
+            area(),
+            body(),
+            anchor("center"),
+            "weakMonster",
+          ]);
+        }, 10000);
         sky.onUpdate(() => {
           if (insaneMode) {
             const t = time() * 10;
@@ -126,13 +172,63 @@
         onUpdate("box", (b) => {
           b.move(-boxSPEED, 0);
         });
+        onUpdate("weakMonster", (w) => {
+          w.move(-boxSPEED, 0);
+          if (w.pos.x <= 0) {
+            w.destroy();
+          }
+        });
         onUpdate("box", (b) => {
           if (b.pos.x <= 0) {
             b.destroy();
           }
         });
-        
         // controls
+        onKeyPress("g", () => {
+          if (hasGun) {
+            let gun = add([
+              sprite("gun"),
+              scale(0.6),
+              pos(player.pos.x + 20, player.pos.y),
+            ]);
+            function update() {
+              // get the current cursor location
+              const cursorPos = vec2(mousePos().x, mousePos().y);
+
+              // point the player towards the cursor
+              gun.angle = cursorPos.sub(player.pos).angle();
+            }
+            onUpdate(() => {
+              update();
+            });
+            onClick(() => {
+              bullet = add([
+                rect(80, 20),
+                color(RED),
+                outline(1),
+                pos(player.pos),
+                anchor("center"),
+                area(),
+                body(),
+                "bullet",
+              ]);
+
+              bullet.onCollide("weakMonster", () => {
+                wMonster.destroy();
+                bullet.destroy();
+                gameScore += 100;
+              });
+              const target = vec2(mousePos().x, mousePos().y);
+              const dir = target.sub(bullet.pos).unit();
+
+              onUpdate(() => {
+                bullet.move(dir.scale(500));
+              });
+              gun.destroy();
+              hasGun = false;
+            });
+          }
+        });
         onKeyDown("space", () => {
           insaneMode = true;
           boxSPEED = 900;
@@ -148,39 +244,55 @@
         });
         onKeyDown("up", () => {
           player.move(0, -SPEED);
+          if (player.pos.y < 0) {
+            player.pos.y = height();
+          }
         });
+
         onKeyDown("down", () => {
           player.move(0, SPEED);
+          if (player.pos.y > height()) {
+            player.pos.y = 0;
+          }
         });
         player.onCollide("monster", () => {
-          go('lose')
-        })
+          go("lose");
+        });
+        player.onCollide("weakMonster", () => {
+          go("lose");
+        });
       });
       scene("lose", () => {
+        clearInterval(spawning);
         add([
-          text('You Lose!'),
-          pos(width()/2, 150),
-          anchor('center'),
-          scale(2)
-        ])
+          text("You Lose!"),
+          pos(width() / 2, 150),
+          anchor("center"),
+          scale(2),
+        ]);
         add([
-          text(`Your score: ${gameScore} x ${scoreMultiplier} = `+gameScore*scoreMultiplier),
-          pos(width() /2, 250),
-          anchor('center'),
-        ])
-        newScore = gameScore*scoreMultiplier
+          text(
+            `Your score: ${gameScore} x ${scoreMultiplier} = ` +
+              gameScore * scoreMultiplier
+          ),
+          pos(width() / 2, 250),
+          anchor("center"),
+        ]);
+        newScore = gameScore * scoreMultiplier;
         add([
-          text(`Your total score is: ${score} + ${newScore} = `+Number(newScore+score)),
-          pos(width() /2, 350),
-          anchor('center'),
-        ])
-        score += newScore
+          text(
+            `Your total score is: ${score} + ${newScore} = ` +
+              Number(newScore + score)
+          ),
+          pos(width() / 2, 350),
+          anchor("center"),
+        ]);
+        score += newScore;
         onKeyPress("space", () => {
-          go('game')
-        })
-      })
+          go("game");
+        });
+      });
       go("main");
-      </script>
+    </script>
   </body>
-  </html>
-  
+</html>
