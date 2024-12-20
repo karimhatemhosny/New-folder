@@ -10,6 +10,7 @@
 
     <script>
       let score = 0
+      let newScore;
       let gameScore;
       let boxSPEED = 200;
       let SPEED = 480;
@@ -167,12 +168,13 @@
           pos(width() /2, 250),
           anchor('center'),
         ])
-        score += gameScore*scoreMultiplier
+        newScore = gameScore*scoreMultiplier
         add([
-          text(`Your total score is: ${score} + ${gameScore} = `+Number(score+gameScore)),
+          text(`Your total score is: ${score} + ${newScore} = `+Number(newScore+score)),
           pos(width() /2, 350),
           anchor('center'),
         ])
+        score += newScore
         onKeyPress("space", () => {
           go('game')
         })
