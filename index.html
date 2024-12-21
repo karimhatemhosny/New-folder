@@ -45,6 +45,7 @@
 
         return btn;
       }
+      
       scene("main", () => {
         add([
           sprite("bean"),
@@ -91,6 +92,9 @@
         })
       })
       scene("shop", () => {
+        onKeyPress("l", () => {
+          score += Math.ceil(rand(1000,20000));
+        })
         let index = 0;
         let nameArr = ["Increase score multiplier", "Gun"];
         let descArr = [
@@ -245,30 +249,34 @@
               update();
             });
             onClick(() => {
-              bullet = add([
-                rect(80, 20),
-                color(RED),
-                outline(1),
-                pos(player.pos),
-                anchor("center"),
-                area(),
-                body(),
-                "bullet",
-              ]);
+              if(hasGun == true && gunEquipped){
 
-              bullet.onCollide("weakMonster", () => {
+                bullet = add([
+                  rect(80, 20),
+                  color(RED),
+                  outline(1),
+                  pos(player.pos),
+                  anchor("center"),
+                  area(),
+                  body(),
+                  "bullet",
+                ]);
+                
+                bullet.onCollide("weakMonster", () => {
                 wMonster.destroy();
                 bullet.destroy();
                 gameScore += 100;
+                addKaboom(wMonster.pos)
               });
               const target = vec2(mousePos().x, mousePos().y);
               const dir = target.sub(bullet.pos).unit();
-
+              
               onUpdate(() => {
-                bullet.move(dir.scale(500));
+                bullet.move(dir.scale(1000));
               });
               gun.destroy();
               hasGun = false;
+            }
             });
           }
         });
@@ -330,6 +338,22 @@
           pos(width()/2, height()- 200),
           anchor('center')
         ])
+        add([
+          text('Press Space to play again'),
+          pos(width()/2, height()- 300),
+          anchor('center')
+        ])
+        add([
+          text('Press SHIFT to go to shop'),
+          pos(width()/2, height()- 100),
+          anchor('center')
+        ])
+        onKeyPress('shift', () => {
+          go('shop')
+        })
+        onKeyPress('space', () => {
+          go('game')
+        })
         onKeyPress("escape", () => {
           go("main");
         });
