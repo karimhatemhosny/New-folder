@@ -8,9 +8,9 @@
   </head>
   <body>
     <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
-
     <script>
       let score = 0;
+      let musicIsPlaying = false
       let hasGun = false;
       let spawning;
       let bullet;
@@ -23,8 +23,7 @@
       let insaneMode = false;
       let scoreMultiplier = 1;
       kaboom({ background: [0, 0, 0] });
-      loadSprite("spike", "sprites/spike.png");
-      loadSprite("coin", "sprites/coin.png");
+      loadSound("OtherworldyFoe", "sounds/Otherworldly Foe.mp3")
       loadSprite("gun", "sprites/gun.png");
       loadBean();
       function addButton(txt, p, f) {
@@ -45,7 +44,7 @@
 
         return btn;
       }
-      
+
       scene("main", () => {
         add([
           sprite("bean"),
@@ -67,34 +66,36 @@
         ]);
         addButton("Play", vec2(width() / 2, 350), () => go("game"));
         addButton("Shop", vec2(width() / 2, 450), () => go("shop"));
-        addButton("Controls", vec2(width() / 2, 550), () => go('controls'))
+        addButton("Controls", vec2(width() / 2, 550), () => go("controls"));
         add([
-          text('Made by: Karim Hatem \nOn 20 December 2024'),
-          pos(width()/2, height()/2+height()/3),
-          anchor('center')
-        ])
+          text("Made by: Karim Hatem \nOn 20 December 2024"),
+          pos(width() / 2, height() / 2 + height() / 3),
+          anchor("center"),
+        ]);
       });
       scene("controls", () => {
         add([
-          text('Controls'),
-          pos(width()/2, 150),
-          anchor('center'),
+          text("Controls"),
+          pos(width() / 2, 150),
+          anchor("center"),
           scale(2),
-        ])
+        ]);
         add([
-          text('G to equip the gun\nDown/Up arrows to move\nSpace to go insane mode\nEsc to return to main menu'),
-          pos(width()/2, 350),
-          anchor('center'),
+          text(
+            "G to equip the gun\nDown/Up arrows to move\nSpace to go insane mode\nEsc to return to main menu"
+          ),
+          pos(width() / 2, 350),
+          anchor("center"),
           scale(1.5),
-        ])
-        onKeyPress('escape', () => {
-          go('main')
-        })
-      })
+        ]);
+        onKeyPress("escape", () => {
+          go("main");
+        });
+      });
       scene("shop", () => {
         onKeyPress("l", () => {
-          score += Math.ceil(rand(1000,20000));
-        })
+          score += Math.ceil(rand(1000, 20000));
+        });
         let index = 0;
         let nameArr = ["Increase score multiplier", "Gun"];
         let descArr = [
@@ -140,15 +141,21 @@
         onUpdate(() => {
           balance.text = `Exp: ${score}`;
         });
-        onKeyPress('escape', () => {
-          go('main')
-        })
+        onKeyPress("escape", () => {
+          go("main");
+        });
       });
       scene("game", () => {
+        const music = play("OtherworldyFoe")
         const sky = add([rect(width(), height()), color(0, 0, 0), opacity(0)]);
-        add([text('SPACE: insane mode'), pos(24, height() - 24), anchor("botleft")])
+        add([
+          text("SPACE: insane mode"),
+          pos(24, height() - 24),
+          anchor("botleft"),
+        ]);
         gameScore = 0;
         let scoreCounter = add([text(gameScore), pos(40, 80)]);
+        // music.stop()
         let player = add([
           sprite("bean"),
           pos(700, height() / 2 - 200),
@@ -156,7 +163,7 @@
           body(),
           "player",
         ]);
-
+        
         let monster = add([
           sprite("bean"),
           color(RED),
@@ -166,7 +173,7 @@
           anchor("center"),
           "monster",
         ]);
-        loop(0.4, () => {
+        loop(0.5, () => {
           add([
             rect(rand(50, 200), rand(50, 200)),
             outline(3),
@@ -177,7 +184,7 @@
             "box",
           ]);
         });
-
+        
         loop(0.2, () => {
           if (insaneMode) {
             gameScore++;
@@ -189,7 +196,7 @@
             scoreCounter.text = gameScore;
           }
         });
-
+        
         spawning = setInterval(() => {
           wMonster = add([
             sprite("bean"),
@@ -230,18 +237,18 @@
         });
         // controls
         onKeyPress("g", () => {
-          let gunEquipped
+          let gunEquipped;
           if (hasGun && !gunEquipped) {
             let gun = add([
               sprite("gun"),
               scale(0.6),
               pos(player.pos.x + 20, player.pos.y),
-              gunEquipped = true
+              (gunEquipped = true),
             ]);
             function update() {
               // get the current cursor location
               const cursorPos = vec2(mousePos().x, mousePos().y);
-              
+
               // point the player towards the cursor
               gun.angle = cursorPos.sub(player.pos).angle();
             }
@@ -249,8 +256,7 @@
               update();
             });
             onClick(() => {
-              if(hasGun == true && gunEquipped){
-
+              if (hasGun == true && gunEquipped) {
                 bullet = add([
                   rect(80, 20),
                   color(RED),
@@ -263,20 +269,20 @@
                 ]);
                 
                 bullet.onCollide("weakMonster", () => {
-                wMonster.destroy();
-                bullet.destroy();
-                gameScore += 100;
-                addKaboom(wMonster.pos)
-              });
-              const target = vec2(mousePos().x, mousePos().y);
-              const dir = target.sub(bullet.pos).unit();
-              
-              onUpdate(() => {
-                bullet.move(dir.scale(1000));
-              });
-              gun.destroy();
-              hasGun = false;
-            }
+                  wMonster.destroy();
+                  bullet.destroy();
+                  gameScore += 100;
+                  addKaboom(wMonster.pos);
+                });
+                const target = vec2(mousePos().x, mousePos().y);
+                const dir = target.sub(bullet.pos).unit();
+
+                onUpdate(() => {
+                  bullet.move(dir.scale(1000));
+                });
+                gun.destroy();
+                hasGun = false;
+              }
             });
           }
         });
@@ -284,11 +290,13 @@
           insaneMode = true;
           boxSPEED = 900;
           SPEED = 600;
+          music.speed = 2
         });
         onKeyRelease("space", () => {
           insaneMode = false;
           boxSPEED = 200;
           SPEED = 480;
+          music.speed = 1
         });
         loop(1, () => {
           monster.moveTo(200, player.pos.y);
@@ -308,9 +316,11 @@
         });
         player.onCollide("monster", () => {
           go("lose");
+          music.paused = true
         });
         player.onCollide("weakMonster", () => {
           go("lose");
+          music.paused = true
         });
       });
       scene("lose", () => {
@@ -322,38 +332,44 @@
           scale(2),
         ]);
         add([
-          text(`Your score: ${gameScore} x ${scoreMultiplier} = ` +gameScore * scoreMultiplier),
+          text(
+            `Your score: ${gameScore} x ${scoreMultiplier} = ` +
+              gameScore * scoreMultiplier
+          ),
           pos(width() / 2, 250),
           anchor("center"),
         ]);
         newScore = gameScore * scoreMultiplier;
         add([
-          text(`Your total score is: ${score} + ${newScore} = ` +Number(newScore + score)),
+          text(
+            `Your total score is: ${score} + ${newScore} = ` +
+              Number(newScore + score)
+          ),
           pos(width() / 2, 350),
           anchor("center"),
         ]);
         score += newScore;
         add([
-          text('Press Escape to go to main menu'),
-          pos(width()/2, height()- 200),
-          anchor('center')
-        ])
+          text("Press Escape to go to main menu"),
+          pos(width() / 2, height() - 200),
+          anchor("center"),
+        ]);
         add([
-          text('Press Space to play again'),
-          pos(width()/2, height()- 300),
-          anchor('center')
-        ])
+          text("Press Space to play again"),
+          pos(width() / 2, height() - 300),
+          anchor("center"),
+        ]);
         add([
-          text('Press SHIFT to go to shop'),
-          pos(width()/2, height()- 100),
-          anchor('center')
-        ])
-        onKeyPress('shift', () => {
-          go('shop')
-        })
-        onKeyPress('space', () => {
-          go('game')
-        })
+          text("Press SHIFT to go to shop"),
+          pos(width() / 2, height() - 100),
+          anchor("center"),
+        ]);
+        onKeyPress("shift", () => {
+          go("shop");
+        });
+        onKeyPress("space", () => {
+          go("game");
+        });
         onKeyPress("escape", () => {
           go("main");
         });
