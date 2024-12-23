@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/x-icon" href="ico.png" />
+    <link rel="icon" type="image/x-icon" href="ico.ico" />
     <title>Chase Game</title>
   </head>
   <body>
@@ -12,6 +12,13 @@
     <script>
       let score = 0;
       let hasGun = false;
+      let priceMultiplier = 1;
+      let monsterSize = 4;
+      let boxSize = 320
+      let item1;
+      let item2;
+      let item3;
+      let item4;
       let spawning;
       let bullet;
       let wMonster;
@@ -22,6 +29,22 @@
       let monsterSpeed = 20;
       let insaneMode = false;
       let scoreMultiplier = 1;
+      item1 = {
+          price: 1200,
+          index: 0
+        }
+        item2 = {
+          price: 3000,
+          index: 1,
+        }
+        item3 = {
+          price: 2500,
+          index: 2,
+        }
+        item4 = {
+          price: 900,
+          index: 3,
+        }
       kaboom({ background: [0, 0, 0] });
       loadSprite("spike", "sprites/spike.png");
       loadSprite("coin", "sprites/coin.png");
@@ -96,10 +119,12 @@
           score += Math.ceil(rand(1000,20000));
         })
         let index = 0;
-        let nameArr = ["Increase score multiplier", "Gun"];
+        let nameArr = ["Increase score multiplier", "Gun", "Decrease monster size", "Decrease box size"];
         let descArr = [
-          "Multiply your xp at the end of the game \nCosts: 1200 xp",
-          "yes i am not joking\nCosts: 3000xp\nOne time use",
+          `Multiply your xp at the end of the game \nCosts: ${item1.price} xp`,
+          `yes i am not joking\nCosts: ${item2.price} xp\nOne time use`,
+          `Decrease enemy size and hitbox\nCosts: ${item3.price} xp`,
+          `Decrease box size and hitbox\nCosts: ${item4.price}`,
         ];
         let name = add([
           text(nameArr[index]),
@@ -113,12 +138,24 @@
         ]);
         let balance = add([text(`Exp: ${score}`), pos(80, 40)]);
         addButton("Buy", vec2(width() / 2, height() / 2 + height() / 3), () => {
-          if (index === 0 && score >= 1200) {
+          if (index === item1.index && score >= item1.price) {
+            score -= item1.price;
+            item1.price = Math.floor(item1.price *= 1.5)
+            item2.price = Math.floor(item2.price *= 1.5)
+            item3.price = Math.floor(item3.price *= 1.5)
+            item4.price = Math.floor(item4.price *= 1.5)
+            descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp` 
+            desc.text = descArr[index]
             scoreMultiplier += 1;
-            score -= 1200;
-          } else if (index === 1 && score >= 3000 && hasGun === false) {
+          } else if (index === item2.index && score >= item2.price && hasGun === false) {
             hasGun = true;
-            score -= 3000;
+            score -= item2.price;
+          } else if(index === item3.index && score >= item3.price && monsterSize != 0.5){
+            monsterSize -= 0.5
+            score -= item3.price;
+          } else if(index === item4.index && score >= item4.price && boxSize >= 180){
+            boxSize -= 30
+            score -= item4.price;
           }
         });
         addButton(">", vec2(width() / 2 + width() / 3, 250), () => {
@@ -139,6 +176,10 @@
         });
         onUpdate(() => {
           balance.text = `Exp: ${score}`;
+          descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp` 
+          descArr[1] = `yes i am not joking\nCosts: ${item2.price} xp\nOne time use`
+          descArr[2] = `Decrease enemy size and hitbox\nCosts: ${item3.price} xp`
+          descArr[3] = `Decrease box size and hitbox\nCosts: ${item4.price}`
         });
         onKeyPress('escape', () => {
           go('main')
@@ -161,14 +202,14 @@
           sprite("bean"),
           color(RED),
           pos(player.pos.x - 200, player.pos.y),
-          scale(3),
+          scale(monsterSize),
           area(),
           anchor("center"),
           "monster",
         ]);
         loop(0.4, () => {
           add([
-            rect(rand(50, 200), rand(50, 200)),
+            rect(rand(50, boxSize), rand(50, boxSize)),
             outline(3),
             color(rgb(150, 75, 0)),
             pos(width() / 2 + width() / 3, rand(0, height() - 200)),
@@ -195,7 +236,7 @@
             sprite("bean"),
             color(RED),
             pos(player.pos.x + 700, player.pos.y),
-            scale(3),
+            scale(monsterSize),
             area(),
             body(),
             anchor("center"),
