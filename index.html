@@ -12,13 +12,15 @@
     <script>
       let score = 0;
       let hasGun = false;
+      let hasSword = false;
       let priceMultiplier = 1;
       let monsterSize = 4;
-      let boxSize = 320
+      let boxSize = 320;
       let item1;
       let item2;
       let item3;
       let item4;
+      let item5;
       let spawning;
       let bullet;
       let wMonster;
@@ -29,27 +31,59 @@
       let monsterSpeed = 20;
       let insaneMode = false;
       let scoreMultiplier = 1;
+      let goldenBean;
+      let swordTimer;
+      let sword;
       item1 = {
-          price: 1200,
-          index: 0
-        }
-        item2 = {
-          price: 3000,
-          index: 1,
-        }
-        item3 = {
-          price: 2500,
-          index: 2,
-        }
-        item4 = {
-          price: 900,
-          index: 3,
-        }
+        price: 1200,
+        index: 0,
+      };
+      item2 = {
+        price: 3000,
+        index: 1,
+      };
+      item3 = {
+        price: 2500,
+        index: 2,
+      };
+      item4 = {
+        price: 900,
+        index: 3,
+      };
+      item5 = {
+        price: 3500,
+        index: 4,
+      }
       kaboom({ background: [0, 0, 0] });
-      loadSprite("spike", "sprites/spike.png");
-      loadSprite("coin", "sprites/coin.png");
       loadSprite("gun", "sprites/gun.png");
+      loadSprite('gold', 'sprites/gold.png')
+      loadSpriteAtlas("sprites/dungeon.png", {
+        "sword": {
+          "x": 322,
+          "y": 65,
+          "width": 12,
+          "height": 32,
+        },
+      })
       loadBean();
+      function spin() {
+	      let spinning = false
+      return {
+        id: "spin",
+        update() {
+          if (spinning) {
+            this.angle += 1200 * dt()
+            if (this.angle >= 360) {
+              this.angle = 0
+              spinning = false
+            }
+          }
+        },
+        spin() {
+          spinning = true
+        },
+      }
+    }
       function addButton(txt, p, f) {
         // add a parent background object
         const btn = add([
@@ -68,7 +102,7 @@
 
         return btn;
       }
-      
+
       scene("main", () => {
         add([
           sprite("bean"),
@@ -90,41 +124,50 @@
         ]);
         addButton("Play", vec2(width() / 2, 350), () => go("game"));
         addButton("Shop", vec2(width() / 2, 450), () => go("shop"));
-        addButton("Controls", vec2(width() / 2, 550), () => go('controls'))
+        addButton("Controls", vec2(width() / 2, 550), () => go("controls"));
         add([
-          text('Made by: Karim Hatem \nOn 20 December 2024'),
-          pos(width()/2, height()/2+height()/3),
-          anchor('center')
-        ])
+          text("Made by: Karim Hatem \nOn 20 December 2024"),
+          pos(width() / 2, height() / 2 + height() / 3),
+          anchor("center"),
+        ]);
       });
       scene("controls", () => {
         add([
-          text('Controls'),
-          pos(width()/2, 150),
-          anchor('center'),
+          text("Controls"),
+          pos(width() / 2, 150),
+          anchor("center"),
           scale(2),
-        ])
+        ]);
         add([
-          text('G to equip the gun\nDown/Up arrows to move\nSpace to go insane mode\nEsc to return to main menu'),
-          pos(width()/2, 350),
-          anchor('center'),
+          text(
+            "G to equip the gun\nDown/Up arrows to move\nSpace to go insane mode\nEsc to return to main menu"
+          ),
+          pos(width() / 2, 350),
+          anchor("center"),
           scale(1.5),
-        ])
-        onKeyPress('escape', () => {
-          go('main')
-        })
-      })
+        ]);
+        onKeyPress("escape", () => {
+          go("main");
+        });
+      });
       scene("shop", () => {
-        onKeyPress("l", () => {
-          score += Math.ceil(rand(1000,20000));
-        })
-        let index = 0;
-        let nameArr = ["Increase score multiplier", "Gun", "Decrease monster size", "Decrease box size"];
+        onKeyPress("k", () => {
+          score += Math.ceil(rand(1000, 20000));
+        });
+        let index = 4;
+        let nameArr = [
+          "Increase score multiplier",
+          "Gun",
+          "Decrease monster size",
+          "Decrease box size",
+          "Roulette"
+        ];
         let descArr = [
           `Multiply your xp at the end of the game \nCosts: ${item1.price} xp`,
           `yes i am not joking\nCosts: ${item2.price} xp\nOne time use`,
           `Decrease enemy size and hitbox\nCosts: ${item3.price} xp`,
           `Decrease box size and hitbox\nCosts: ${item4.price}`,
+          `Has a chance to get the following: \nA sword \nScore multiplier \nCosts: ${item5.price}`
         ];
         let name = add([
           text(nameArr[index]),
@@ -137,25 +180,57 @@
           anchor("center"),
         ]);
         let balance = add([text(`Exp: ${score}`), pos(80, 40)]);
+        let transaction = add([
+          text(''),
+          color(GREEN),
+          pos(width()/2, height()/2+height()/5),
+          anchor('center')
+        ])
         addButton("Buy", vec2(width() / 2, height() / 2 + height() / 3), () => {
           if (index === item1.index && score >= item1.price) {
             score -= item1.price;
-            item1.price = Math.floor(item1.price *= 1.5)
-            item2.price = Math.floor(item2.price *= 1.5)
-            item3.price = Math.floor(item3.price *= 1.5)
-            item4.price = Math.floor(item4.price *= 1.5)
-            descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp` 
-            desc.text = descArr[index]
+            item1.price = Math.floor((item1.price *= 1.5));
+            item2.price = Math.floor((item2.price *= 1.5));
+            item3.price = Math.floor((item3.price *= 1.5));
+            item4.price = Math.floor((item4.price *= 1.5));
+            item5.price = Math.floor((item4.price *= 1.5));
+            descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp`;
+            desc.text = descArr[index];
             scoreMultiplier += 1;
+            transaction.text = `Upgrade purchased!`
+            transaction.color = (GREEN)
           } else if (index === item2.index && score >= item2.price && hasGun === false) {
             hasGun = true;
             score -= item2.price;
-          } else if(index === item3.index && score >= item3.price && monsterSize != 0.5){
-            monsterSize -= 0.5
+            transaction.text = `Upgrade purchased!`
+            transaction.color = (GREEN)
+          } else if (index === item3.index && score >= item3.price && monsterSize != 0.5) {
+            monsterSize -= 0.5;
             score -= item3.price;
-          } else if(index === item4.index && score >= item4.price && boxSize >= 180){
-            boxSize -= 30
+            transaction.text = `Upgrade purchased!`
+            transaction.color = (GREEN)
+          } else if (index === item4.index && score >= item4.price &&boxSize >= 180) {
+            boxSize -= 30;
             score -= item4.price;
+            transaction.text = `Upgrade purchased!`
+            transaction.color = (GREEN)
+          } else if (index === item5.index && score >= item5.price) {
+            let num = Math.ceil(rand(1, 200))
+            let moreRandNum = Math.ceil(rand(1, 1000))
+            score -= item5.price;
+            // a random outcome
+            if(num <= 150){
+              score += moreRandNum
+              transaction.text = `Upgrade purchased!\nYou got some exp`
+              transaction.color = (GREEN)
+            } else if(num >= 190 && !hasSword){
+              hasSword = true
+              transaction.text = `Upgrade purchased!\nYou got a sword`
+              transaction.color = (GREEN)
+            }
+          } else{
+            transaction.text = `Error buying this upgrade`
+            transaction.color = (RED)
           }
         });
         addButton(">", vec2(width() / 2 + width() / 3, 250), () => {
@@ -176,18 +251,23 @@
         });
         onUpdate(() => {
           balance.text = `Exp: ${score}`;
-          descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp` 
-          descArr[1] = `yes i am not joking\nCosts: ${item2.price} xp\nOne time use`
-          descArr[2] = `Decrease enemy size and hitbox\nCosts: ${item3.price} xp`
-          descArr[3] = `Decrease box size and hitbox\nCosts: ${item4.price}`
+          descArr[0] = `Multiply your xp at the end of the game \nCosts: ${item1.price} xp`;
+          descArr[1] = `yes i am not joking\nCosts: ${item2.price} xp\nOne time use`;
+          descArr[2] = `Decrease enemy size and hitbox\nCosts: ${item3.price} xp`;
+          descArr[3] = `Decrease box size and hitbox\nCosts: ${item4.price}`;
+          // descArr[4] = `Decrease box size and hitbox\nCosts: ${item4.price}`;
         });
-        onKeyPress('escape', () => {
-          go('main')
-        })
+        onKeyPress("escape", () => {
+          go("main");
+        });
       });
       scene("game", () => {
         const sky = add([rect(width(), height()), color(0, 0, 0), opacity(0)]);
-        add([text('SPACE: insane mode'), pos(24, height() - 24), anchor("botleft")])
+        add([
+          text("SPACE: insane mode"),
+          pos(24, height() - 24),
+          anchor("botleft"),
+        ]);
         gameScore = 0;
         let scoreCounter = add([text(gameScore), pos(40, 80)]);
         let player = add([
@@ -197,6 +277,7 @@
           body(),
           "player",
         ]);
+        goldenBean = add([sprite('gold'), color(rgb(255,255,0)), pos(player.pos.x + 700, player.pos.y), scale(0.5), area(), anchor("center"), "gold", ])
 
         let monster = add([
           sprite("bean"),
@@ -242,7 +323,18 @@
             anchor("center"),
             "weakMonster",
           ]);
-        }, 10000);
+        }, 10500);
+        gold = setInterval(() => {
+          goldenBean = add([
+            sprite('gold'),
+            color(rgb(255,255,0)),
+            pos(player.pos.x + 700, player.pos.y),
+            scale(0.5),
+            area(),
+            anchor("center"),
+            "gold",
+          ])
+        }, 5000);
         sky.onUpdate(() => {
           if (insaneMode) {
             const t = time() * 10;
@@ -257,6 +349,9 @@
         });
         onUpdate("box", (b) => {
           b.move(-boxSPEED, 0);
+          if (b.pos.x <= 0) {
+            b.destroy();
+          }
         });
         onUpdate("weakMonster", (w) => {
           w.move(-boxSPEED, 0);
@@ -264,25 +359,26 @@
             w.destroy();
           }
         });
-        onUpdate("box", (b) => {
-          if (b.pos.x <= 0) {
-            b.destroy();
+        onUpdate('gold', (g) => {
+          g.move(-900,0)
+          if (g.pos.x <= 0) {
+            g.destroy();
           }
-        });
+        })
         // controls
         onKeyPress("g", () => {
-          let gunEquipped
+          let gunEquipped;
           if (hasGun && !gunEquipped) {
             let gun = add([
               sprite("gun"),
               scale(0.6),
               pos(player.pos.x + 20, player.pos.y),
-              gunEquipped = true
+              (gunEquipped = true),
             ]);
             function update() {
               // get the current cursor location
               const cursorPos = vec2(mousePos().x, mousePos().y);
-              
+
               // point the player towards the cursor
               gun.angle = cursorPos.sub(player.pos).angle();
             }
@@ -290,8 +386,7 @@
               update();
             });
             onClick(() => {
-              if(hasGun == true && gunEquipped){
-
+              if (hasGun == true && gunEquipped) {
                 bullet = add([
                   rect(80, 20),
                   color(RED),
@@ -302,22 +397,22 @@
                   body(),
                   "bullet",
                 ]);
-                
+
                 bullet.onCollide("weakMonster", () => {
-                wMonster.destroy();
-                bullet.destroy();
-                gameScore += 100;
-                addKaboom(wMonster.pos)
-              });
-              const target = vec2(mousePos().x, mousePos().y);
-              const dir = target.sub(bullet.pos).unit();
-              
-              onUpdate(() => {
-                bullet.move(dir.scale(1000));
-              });
-              gun.destroy();
-              hasGun = false;
-            }
+                  wMonster.destroy();
+                  bullet.destroy();
+                  gameScore += 100;
+                  addKaboom(wMonster.pos);
+                });
+                const target = vec2(mousePos().x, mousePos().y);
+                const dir = target.sub(bullet.pos).unit();
+
+                onUpdate(() => {
+                  bullet.move(dir.scale(1000));
+                });
+                gun.destroy();
+                hasGun = false;
+              }
             });
           }
         });
@@ -334,19 +429,59 @@
         loop(1, () => {
           monster.moveTo(200, player.pos.y);
         });
+        onKeyDown("w", () => {
+          player.move(0, -SPEED);
+          if (player.pos.y < 0) {
+            player.pos.y = height();
+          }
+        });
         onKeyDown("up", () => {
           player.move(0, -SPEED);
           if (player.pos.y < 0) {
             player.pos.y = height();
           }
         });
-
+        onKeyDown("s", () => {
+          player.move(0, SPEED);
+          if (player.pos.y > height()) {
+            player.pos.y = 0;
+          }
+        });
         onKeyDown("down", () => {
           player.move(0, SPEED);
           if (player.pos.y > height()) {
             player.pos.y = 0;
           }
         });
+        onKeyPress('x', () => {
+          swordTimer = setTimeout(() => {
+            hasSword = false
+            sword.destroy()
+          }, 10000);
+          let swordEquipped;
+          if(hasSword && !swordEquipped){
+            sword = player.add([
+              pos(50, 50),
+              sprite("sword"),
+              anchor("bot"),
+              rotate(0),
+              scale(3),
+              spin(),
+            ])
+            swordEquipped = true
+            onClick(() => {
+              if(hasSword && swordEquipped){
+                sword.spin()
+                let distance = Math.abs(Math.ceil((goldenBean.pos.x - player.pos.x)))
+                if(distance <= 100){
+                  goldenBean.destroy()
+                  gameScore += 200
+                }
+              }
+            })
+          }
+
+        })
         player.onCollide("monster", () => {
           go("lose");
         });
@@ -355,6 +490,8 @@
         });
       });
       scene("lose", () => {
+        clearTimeout(swordTimer)
+        clearInterval(gold)
         clearInterval(spawning);
         add([
           text("You Lose!"),
@@ -363,38 +500,44 @@
           scale(2),
         ]);
         add([
-          text(`Your score: ${gameScore} x ${scoreMultiplier} = ` +gameScore * scoreMultiplier),
+          text(
+            `Your score: ${gameScore} x ${scoreMultiplier} = ` +
+              gameScore * scoreMultiplier
+          ),
           pos(width() / 2, 250),
           anchor("center"),
         ]);
         newScore = gameScore * scoreMultiplier;
         add([
-          text(`Your total score is: ${score} + ${newScore} = ` +Number(newScore + score)),
+          text(
+            `Your total score is: ${score} + ${newScore} = ` +
+              Number(newScore + score)
+          ),
           pos(width() / 2, 350),
           anchor("center"),
         ]);
         score += newScore;
         add([
-          text('Press Escape to go to main menu'),
-          pos(width()/2, height()- 200),
-          anchor('center')
-        ])
+          text("Press Escape to go to main menu"),
+          pos(width() / 2, height() - 200),
+          anchor("center"),
+        ]);
         add([
-          text('Press Space to play again'),
-          pos(width()/2, height()- 300),
-          anchor('center')
-        ])
+          text("Press Space to play again"),
+          pos(width() / 2, height() - 300),
+          anchor("center"),
+        ]);
         add([
-          text('Press SHIFT to go to shop'),
-          pos(width()/2, height()- 100),
-          anchor('center')
-        ])
-        onKeyPress('shift', () => {
-          go('shop')
-        })
-        onKeyPress('space', () => {
-          go('game')
-        })
+          text("Press SHIFT to go to shop"),
+          pos(width() / 2, height() - 100),
+          anchor("center"),
+        ]);
+        onKeyPress("shift", () => {
+          go("shop");
+        });
+        onKeyPress("space", () => {
+          go("game");
+        });
         onKeyPress("escape", () => {
           go("main");
         });
